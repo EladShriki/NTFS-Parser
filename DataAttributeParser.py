@@ -1,6 +1,8 @@
 from FSFileReader import FSFileReader
 
 
+# CR: [design] Why not group things into a class that can hold state?
+
 def resident_parse(data_attribute: bytes):
     """
     Read the resident data from the given data attribute and return that data
@@ -30,6 +32,7 @@ def runlists_parse(data_attributes: bytes):
         offset = int(bin(data_attributes[0])[:4], 2)
         length_size = int(bin(data_attributes[0])[4:], 2)
         length = int.from_bytes(bytes(data_attributes[1: 1 + length_size]), byteorder='little')
+        # CR: [finish] Local variables should be lower snake case
         VCN = int.from_bytes(data_attributes[1 + length_size: 1 + length_size + offset], byteorder='little', signed=True)
         runlists.append((length, VCN))
         data_attributes = data_attributes[1 + length_size + offset:]
@@ -75,6 +78,7 @@ def data_parser(data_attribute: bytes, filesystem: FSFileReader):
     :return: file_data : bytes
     """
 
+    # CR: [finish] If you're writing comments, your code isn't clear enough
     if data_attribute[8]:  # Check if resident
         file_size = int.from_bytes(data_attribute[48: 55], byteorder='little')
         runlists = runlists_parse(data_attribute)

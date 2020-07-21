@@ -12,6 +12,10 @@ class AttributeHeaderParser(object):
         self.attributes_bytes = attribute_header_data[int.from_bytes(attribute_header_data[20:21], byteorder='little'):]
         self.entry_size = int.from_bytes(attribute_header_data[24:27], byteorder='little')
 
+    # CR: [finish] This sounds like you return a single attribute when you're
+    # actually returning a list. Rename to get_attributes_by_id.
+    # CR: [design] If you had an Attribute object this function would be much
+    # easier to write.
     def get_attribute_by_id(self, needed_id: int):
         """
         Return all attribute bytes by given attribute id, if entry isn't allocated or attribute isn't exist return None
@@ -20,6 +24,8 @@ class AttributeHeaderParser(object):
         :return: attribute : list(bytes)
         """
 
+        # CR: [design] Why not return an empty list? Or even better handle this
+        # case in another function?
         if self.allocated == 0:
             return None
 

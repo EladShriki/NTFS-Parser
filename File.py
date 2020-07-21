@@ -31,6 +31,9 @@ class File(object):
         entry_bytes = self.filesystem_reader.get_cluster(self.starting_cluster)
         entry_bytes = entry_bytes[self.entry_offset: self.entry_offset + self.filesystem_reader.get_record_size()]
         attribute_parser = AttributeHeaderParser(entry_bytes)
+        # CR: [finish] Don't use magic numbers
+        # CR: [design] Here you don't look for attributes in the attribute
+        # list. Why the inconsistency? Maybe for lack of encapsulation?
         data_attributes = attribute_parser.get_attribute_by_id(128)
 
         content = bytes()
