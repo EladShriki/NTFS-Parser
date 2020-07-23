@@ -33,6 +33,7 @@ class FSFileReader(object):
     def cluster_size(self):
         return self._boot_data.cluster_size_in_bytes
 
+    # CR: [design] This doesn't seem to belong here...
     @property
     def mft_starting_cluster(self):
         return self._boot_data.mft_starting_cluster

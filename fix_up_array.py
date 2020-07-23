@@ -15,6 +15,7 @@ class FixUpArray:
 
         self._fixed_value = fix_up_array_bytes[:2]
 
+        # CR: [finish] This line is a bit overwhelming
         self._origin_values = [bytes(value) for value in zip(fix_up_array_bytes[2::2], fix_up_array_bytes[3::2])]
 
     def replace_fix_ups(self, mft_entry: bytearray) -> bytes:

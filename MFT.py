@@ -15,14 +15,22 @@ class MFT:
         """
 
         self.filesystem_reader = FSFileReader(fs_file_path)
+        # CR: [implementation] This is awkward... If only FSFileReader could
+        # read less than a cluster...
+        # CR: [implementation] Break non-trivial logic to a function with a
+        # meaningful name
         mft_entry_0 = self.filesystem_reader.get_clusters(
             self.filesystem_reader.mft_starting_cluster, 1)[:self.MFT_ENTRY_SIZE]
         self._mft_header = mft_header.MftHeader(mft_entry_0)
         mft_entry_0 = self._mft_header.get_origin_mft_entry_bytes(mft_entry_0)
+        # CR: [design] Why is the mft aware of attributes?
         attributes_bytes = mft_entry_0[self._mft_header.attributes_offset:]
         self._mft_file_bytes = self._get_mft_bytes(attributes_bytes)
         self.mft_max_index = int(len(self._mft_file_bytes) / self.MFT_ENTRY_SIZE)
 
+    # CR: [design] This function speaks in the language of atributes insted of
+    # the language of entries.
+    # CR: [design] Why not use the File class abstraction for this?
     def _get_mft_bytes(self, attributes_bytes: bytes) -> bytes:
         """
         Return the mft file bytes
@@ -32,11 +40,13 @@ class MFT:
         """
 
         attribute = Attribute(attributes_bytes, self.filesystem_reader)
+        # CR: [finish] Don't use magic numbers!
         while attribute.attribute_identifier != 128:
             attributes_bytes = attributes_bytes[attribute.attribute_length:]
             attribute = Attribute(attributes_bytes, self.filesystem_reader)
         return attribute.content
 
+    # CR: [design] Why return bytes and not and entry object
     def get_mft_entry(self, index: int) -> bytes:
         """
         Return the bytes of the wanted mft entry

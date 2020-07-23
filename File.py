@@ -5,6 +5,7 @@ from fs_file_reader import FSFileReader
 from filename_parser import FilenameParser
 
 
+# CR: [finish] FileEntry might be a better name
 class File(object):
 
     FILE_NAME_IDENTIFIER = 48
@@ -19,6 +20,7 @@ class File(object):
         :param filesystem_reader: FSFileReader
         """
 
+        # CR: [finish] This is unused, remove
         self._mft_index = mft_index
         self._filesystem_reader = filesystem_reader
         self._mft_header = mft_header.MftHeader(mft_entry_bytes)
@@ -26,6 +28,7 @@ class File(object):
         attributes_bytes = mft_entry_bytes[self._mft_header.attributes_offset:]
         self.file_names, self._data_attributes = self._attributes(attributes_bytes)
 
+    # CR: [conventions] Write functions top down
     def _attributes(self, attributes_bytes: bytes) -> typing.Tuple[typing.List[str], typing.List[Attribute]]:
         """
         Parse the attributes in the mft entry
@@ -50,6 +53,7 @@ class File(object):
             attribute = Attribute(attributes_bytes, self._filesystem_reader)
         return file_names, data_attributes
 
+    # CR: [design] +1 for the simplicity of this function
     def get_content(self) -> bytes:
         """
         Read the current file data with the data parser and return the file data

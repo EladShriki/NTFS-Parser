@@ -2,6 +2,7 @@ import typing
 from fs_file_reader import FSFileReader
 
 
+# CR: [design] How about a class to abstract a single run away?
 class Runlists:
 
     def __init__(self, runlist_bytes: bytes, filesystem_reader: FSFileReader):
@@ -26,6 +27,7 @@ class Runlists:
         runlists = []
 
         while runlist_bytes[0] != 0:
+            # CR: [finish] Think about variable names
             binary_number = bin(runlist_bytes[0])[2:].zfill(8)
             offset = int(binary_number[:4], 2)
             length_size = int(binary_number[4:], 2)
