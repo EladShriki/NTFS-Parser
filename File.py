@@ -1,44 +1,66 @@
-from FSFileReader import FSFileReader
-from AttributeHeaderParser import AttributeHeaderParser
-from DataAttributeParser import data_parser
+import typing
+from Headers import mft_header
+from attribute import Attribute
+from fs_file_reader import FSFileReader
+from filename_parser import FilenameParser
 
 
 class File(object):
-    def __init__(self, filename: str, entry_offset: int, starting_cluster: int, filesystem_reader: FSFileReader,
-                 entry_index: int):
-        """
-        File object, save info about the file
 
-        :param filename: str
-        :param entry_offset: int
-        :param starting_cluster: int
+    FILE_NAME_IDENTIFIER = 48
+    DATA_IDENTIFIER = 128
+
+    def __init__(self, mft_entry_bytes: bytes, mft_index: int, filesystem_reader: FSFileReader):
+        """
+        File handler, parse the file_entry and save info about the file
+
+        :param mft_entry_bytes: mft entry bytes to parse
+        :param mft_index: the mft entry index
         :param filesystem_reader: FSFileReader
         """
 
-        self.file_name = filename
-        self.starting_cluster = starting_cluster
-        self.entry_offset = entry_offset
-        self.filesystem_reader = filesystem_reader
-        self.entry_index = entry_index
+        self._mft_index = mft_index
+        self._filesystem_reader = filesystem_reader
+        self._mft_header = mft_header.MftHeader(mft_entry_bytes)
+        mft_entry_bytes = self._mft_header.get_origin_mft_entry_bytes(mft_entry_bytes)
+        attributes_bytes = mft_entry_bytes[self._mft_header.attributes_offset:]
+        self.file_names, self._data_attributes = self._attributes(attributes_bytes)
 
-    def get_content(self):
+    def _attributes(self, attributes_bytes: bytes) -> typing.Tuple[typing.List[str], typing.List[Attribute]]:
+        """
+        Parse the attributes in the mft entry
+
+        :param attributes_bytes: the attributes bytes to parse
+        :return: the file names found and the data attributes
+        """
+
+        if not self._mft_header.is_allocated:
+            return [], []
+
+        file_names = []
+        data_attributes = []
+
+        attribute = Attribute(attributes_bytes, self._filesystem_reader)
+        while attribute.attribute_identifier != -1:
+            if attribute.attribute_identifier == self.FILE_NAME_IDENTIFIER:
+                file_names.append(FilenameParser(attribute).filename)
+            if attribute.attribute_identifier == self.DATA_IDENTIFIER:
+                data_attributes.append(attribute)
+            attributes_bytes = attributes_bytes[attribute.attribute_length:]
+            attribute = Attribute(attributes_bytes, self._filesystem_reader)
+        return file_names, data_attributes
+
+    def get_content(self) -> bytes:
         """
         Read the current file data with the data parser and return the file data
 
-        :return: file_data : bytes
+        :return: file_data : the file content
         """
 
-        entry_bytes = self.filesystem_reader.get_cluster(self.starting_cluster)
-        entry_bytes = entry_bytes[self.entry_offset: self.entry_offset + self.filesystem_reader.get_record_size()]
-        attribute_parser = AttributeHeaderParser(entry_bytes)
-        # CR: [finish] Don't use magic numbers
-        # CR: [design] Here you don't look for attributes in the attribute
-        # list. Why the inconsistency? Maybe for lack of encapsulation?
-        data_attributes = attribute_parser.get_attribute_by_id(128)
+        data = bytes()
 
-        content = bytes()
-        for data_attribute in data_attributes:
-            content += data_parser(data_attribute, self.filesystem_reader)
-        return content
+        for data_attribute in self._data_attributes:
+            data += data_attribute.content
 
+        return data
 
